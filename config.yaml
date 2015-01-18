@@ -2,6 +2,8 @@
 apikeys:
     monkeys: monkeybut
     nano : pano
-
-
-uploadfolder : c:\Users\mgm\code\
+mongo:
+    savetomongo : True
+    host : localhost
+    port : 27017
+    database : new
