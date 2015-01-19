@@ -1,0 +1,4 @@
+pillow
+mongoengine
+flask
+pyyaml

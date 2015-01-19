@@ -20,6 +20,7 @@ from classes import Fileinfo
 from savetomongo import retrieve
 from mongoengine import *
 import statsd
+import sys
 
 configfile = open("config.yaml", "r")
 config = yaml.load(configfile)
@@ -28,21 +29,22 @@ configmongo = config["mongo"]
 
 syslogger = logging.getLogger('syslogger')
 syslogger.setLevel(logging.INFO)
+
 if platform.system() == "Linux":
-    handler = logging.handlers.SysLogHandler(address = '/dev/log')
-    syslogger.addHandler(handler)
-else:
-    handler = logging.handlers.RotatingFileHandler(
-              "optimizer.log", maxBytes=1024, backupCount=5)
-    syslogger.addHandler(handler)
-consolelog = logging.StreamHandler()
+    try:
+        handler = logging.handlers.SysLogHandler(address = '/dev/log')
+        syslogger.addHandler(handler)
+    except:
+        print("Can not log to syslog, eventhough I am on line, maybe in a container???")
+
+consolelog = logging.StreamHandler(sys.stdout)
 syslogger.addHandler(consolelog)
 UPLOAD_FOLDER =  "files/"
 ALLOWED_EXTENSIONS = set(['jpeg', 'png', 'jpg', 'gif'])
 app = Flask(__name__)
 #try to connect to datadog...
 try:
-    statsd.statsd.connect('dkr4.aut-aut.rocks', 8125)
+    statsd.statsd.connect()
 except:
     syslogger.warn(datetime.now().__str__()+" Could not connect to statsd.")
 
@@ -121,8 +123,8 @@ def upload(storagemethod):
     #return make_response(json.dumps(fileinfo.__dict__),200)
 @app.route("/files/<filename>", methods=['GET'])
 def retrievebyname(filename):
-    syslogger.info("Entered Retrieve")
-    syslogger.info("Looking for file: "+ UPLOAD_FOLDER+filename)
+    syslogger.info(datetime.now().__str__()+" Entered Retrieve")
+    syslogger.info(datetime.now().__str__()+" Looking for file: "+ UPLOAD_FOLDER+filename)
     try:
         thefile = open(UPLOAD_FOLDER+filename,'rb')
         return send_file(thefile)
@@ -130,18 +132,18 @@ def retrievebyname(filename):
         syslogger.warn(datetime.now().__str__()+" Trying to find the file in the database....")
 
         retrieved = retrieve.getbyname(filename)
-        syslogger.info(datetime.now().__str__()+ "We found "+str(retrieved.id)+ " in the db.")
+        syslogger.info(datetime.now().__str__()+ " We found "+str(retrieved.id)+ " in the db.")
         theid = str(retrieved.id)
         return redirect("/files/id/"+theid+"/"+filename)
 @app.route("/files/id/<fileid>", methods=['GET'])
 def getbyid(fileid):
-    syslogger.info("Entered DB Retrieve")
-    syslogger.info("Looking for id: "+ fileid)
+    syslogger.info(datetime.now().__str__()+"Entered DB Retrieve")
+    syslogger.info(datetime.now().__str__()+"Looking for id: "+ fileid)
     try:
         thefile = retrieve.retrievebyid(fileid)
         thefilename = thefile.filename
-        print thefilename
-        syslogger.info("GotThe File, lets return it....")
+
+        syslogger.info(datetime.now().__str__() + " Got The File, lets return it....")
         return redirect("/files/id/"+fileid+'/'+thefilename,307)
         #return send_file(thefile.binaryfile.get(),mimetype="image/jpeg")
     except:
@@ -149,11 +151,11 @@ def getbyid(fileid):
 @app.route("/files/id/<fileid>/<thefilename>", methods=['GET'])
 def getbyidname(fileid,thefilename):
     try:
-        syslogger.info("Thefilename is: "+thefilename)
-        syslogger.info("The fileid is: "+fileid)
+        syslogger.info(datetime.now().__str__()+" Thefilename is: "+thefilename)
+        syslogger.info(datetime.now().__str__()+" The fileid is: "+fileid)
         thefile = retrieve.retrievebyid(fileid)
-        syslogger.info("The mimetype is: "+thefile.contentype)
-        return send_file(thefile.binaryfile.get(),mimetype="image/png")
+        syslogger.info(datetime.now().__str__()+" The mimetype is: "+thefile.contentype)
+        return send_file(thefile.binaryfile.get(),mimetype=thefile.contentype)
 
     except:
         return make_response("There was a problem returning this file. Please try again",500)
