@@ -61,13 +61,13 @@ def allowed_file(filename):
 
 
 
-@app.route('/',methods['GET'])
+@app.route('/', methods=['GET'])
 def landingindex():
     return app.send_static_file('static/index.html')
 
 
 
-@app.route('/<path:filename>',methods['GET'])
+@app.route('/<path:filename>', methods=['GET'])
 def landing(filename):
     return send_from_directory('static/', filename)
 
