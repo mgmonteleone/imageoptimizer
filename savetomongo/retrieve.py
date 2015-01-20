@@ -4,7 +4,7 @@ from mongoengine import *
 from classes import Fileinfo
 from flask import make_response
 import datetime
-
+import statsd
 try:
     configfile = open("config.yaml", "r")
     config = yaml.load(configfile)

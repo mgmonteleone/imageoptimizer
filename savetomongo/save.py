@@ -6,6 +6,7 @@ import datetime
 import os ,os.path
 import consul
 import json
+import statsd
 #Get Our Configuration From consul
 #First get the name of the server from srv record
 srvrecordconsul = SrvRecord("consul")
