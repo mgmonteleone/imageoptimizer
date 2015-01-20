@@ -20,3 +20,6 @@ This RESTfull service receives POSTS of image files, lossly optimizes them, and 
 * GET
    *  /files/[name of file] - retrieves the optimized image by filename (same as original passed filename)
    *  /files/[mongoid] - retrieves file by mongoid (returned from the post). This endpoint actually redirects to /files/[mongoid][filename] to allow the retrieval with pretty filename.
+
+# License
+Licensed under [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.html), if anyone cares :)
