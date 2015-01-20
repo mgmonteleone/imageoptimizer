@@ -16,12 +16,12 @@ configmongo = {
 }
 #then get the name of the database from kv store.
 print(srvrecordconsul.target)
-kvstore = consul.Consul(host=srvrecordconsul.target, port=srvrecordconsul.port)
+kvstore = consul.Consul(host=srvrecordconsul.target, port=8500)
 try:
     key = kvstore.kv.get("apps/imageoptimizer/dbname")
     configmongo["database"] = key[1]["Value"]
 except ConnectionError:
-    print "--------Could not connect to consul at" + str(srvrecordconsul.target) + " port: "+ str(srvrecordconsul.port)
+    print "--------Could not connect to consul at" + str(srvrecordconsul.target) + " port: 8500"
     raise
 print configmongo
 connect(configmongo["database"], host=configmongo["host"], port=configmongo["port"])

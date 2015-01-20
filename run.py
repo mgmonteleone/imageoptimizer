@@ -44,7 +44,7 @@ ALLOWED_EXTENSIONS = set(['jpeg', 'png', 'jpg', 'gif'])
 app = Flask(__name__)
 #try to connect to datadog...
 try:
-    statsd.statsd.connect()
+    statsd.statsd.connect(host=os.environ.get("mydockerhost"),port="8125")
 except:
     syslogger.warn(datetime.now().__str__()+" Could not connect to statsd.")
 
