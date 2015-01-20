@@ -1,5 +1,6 @@
-
 __author__ = 'mgm'
+
+
 class Fileinfo(object):
     filename = None
     mimetype = "image/png"
@@ -13,7 +14,8 @@ class Fileinfo(object):
     dbreference = None
 
 
-    def __init__(self, filename, mimetype,  filesizeoriginal, width, height, filesizeoptimized, reference,processtime, percentsaved,dbreference):
+    def __init__(self, filename, mimetype, filesizeoriginal, width, height, filesizeoptimized, reference, processtime,
+                 percentsaved, dbreference):
         self.filesizeoriginal = filesizeoriginal
         self.filesizeoptimized = filesizeoptimized
         self.mimetype = mimetype
@@ -25,3 +27,39 @@ class Fileinfo(object):
         self.percentsaved = percentsaved
         self.dbreference = dbreference
 
+
+class SrvRecord(object):
+    service = None
+    target = None
+    port = None
+
+    def __init__(self, service):
+        import dns.resolver
+        servicename = service + ".service.dc1.consul"
+        r = dns.resolver.Resolver()
+        r.nameservers = ['146.148.116.121']
+        r.timeout = 2
+        r.lifetime = 2
+        srv = r.query(servicename, 'SRV')[0]
+        self.target = srv.target
+        self.port = srv.port
+        self.service = service
+
+    def avail(self):
+        """
+        The number of the server resources available
+
+        :return:int: Count of service instances available
+        """
+        import dns.resolver
+
+        servicename = self.service + ".service.dc1.consul"
+        r = dns.resolver.Resolver()
+        r.nameservers = ['146.148.116.121']
+        r.timeout = 2
+        r.lifetime = 2
+        count = len(r.query(servicename, 'SRV'))
+        return count
+
+    def __str__(self):
+        return "Service: " + str(self.service) + " target: " + str(self.target) + " port: " + str(self.port)

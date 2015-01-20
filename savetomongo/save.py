@@ -1,15 +1,24 @@
 __author__ = 'mgm'
 import yaml
 from mongoengine import *
-from classes import Fileinfo
+from classes import Fileinfo, SrvRecord
 import datetime
-
-try:
+import os ,os.path
+import srvlookup
+if os.path.isfile("config.yaml"):
     configfile = open("config.yaml", "r")
     config = yaml.load(configfile)
     configmongo = config["mongo"]
-except:
-    print "help"
+elif os.environ(["ansibleconfig"]) == True:
+    try:
+        srvrecord = SrvRecord("mongos")
+        configmongo = {
+            "database" : "imageoptimizer",
+            "host" : "localhost",
+            "port" : "port"
+        }
+    except:
+        print "Could not find my server"
 connect(configmongo["database"], host=configmongo["host"], port=configmongo["port"])
 
 
