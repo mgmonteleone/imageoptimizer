@@ -59,19 +59,6 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
-
-
-@app.route('/',methods['GET'])
-def landingindex():
-    return app.send_static_file('static/index.html')
-
-
-
-@app.route('/<path:filename>',methods['GET'])
-def landing(filename):
-    return send_from_directory('static/', filename)
-
-
 @app.route("/<storagemethod>/", methods=['POST'],strict_slashes=False)
 def upload(storagemethod):
     if storagemethod not in ['db','file']:
