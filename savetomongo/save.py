@@ -4,21 +4,26 @@ from mongoengine import *
 from classes import Fileinfo, SrvRecord
 import datetime
 import os ,os.path
-import srvlookup
-if os.path.isfile("config.yaml"):
-    configfile = open("config.yaml", "r")
-    config = yaml.load(configfile)
-    configmongo = config["mongo"]
-elif os.environ(["ansibleconfig"]) == True:
-    try:
-        srvrecord = SrvRecord("mongos")
-        configmongo = {
-            "database" : "imageoptimizer",
-            "host" : "localhost",
-            "port" : "port"
-        }
-    except:
-        print "Could not find my server"
+import consul
+import json
+#Get Our Configuration From consul
+#First get the name of the server from srv record
+srvrecordconsul = SrvRecord("consul")
+srvrecordmongo = SrvRecord("mongos")
+configmongo = {
+    "host" : srvrecordmongo.target.to_text(),
+    "port" : srvrecordmongo.port,
+}
+#then get the name of the database from kv store.
+print(srvrecordconsul.target)
+kvstore = consul.Consul(host=srvrecordconsul.target, port=srvrecordconsul.port)
+try:
+    key = kvstore.kv.get("apps/imageoptimizer/dbname")
+    configmongo["database"] = key[1]["Value"]
+except ConnectionError:
+    print "--------Could not connect to consul at" + str(srvrecordconsul.target) + " port: "+ str(srvrecordconsul.port)
+    raise
+print configmongo
 connect(configmongo["database"], host=configmongo["host"], port=configmongo["port"])
 
 

@@ -1,5 +1,5 @@
 __author__ = 'mgm'
-
+import os
 
 class Fileinfo(object):
     filename = None
@@ -35,9 +35,12 @@ class SrvRecord(object):
 
     def __init__(self, service):
         import dns.resolver
-        servicename = service + ".service.dc1.consul"
+        try:
+            servicename = service + os.environ.get("consulsuffix")
+        except:
+            print "----------A environment variable [consulsuffix] is required to bootstrap-----------"
+            raise
         r = dns.resolver.Resolver()
-        r.nameservers = ['146.148.116.121']
         r.timeout = 2
         r.lifetime = 2
         srv = r.query(servicename, 'SRV')[0]
@@ -52,10 +55,12 @@ class SrvRecord(object):
         :return:int: Count of service instances available
         """
         import dns.resolver
-
-        servicename = self.service + ".service.dc1.consul"
+        try:
+            servicename = self.service + os.environ.get("consulsuffix")
+        except:
+            print "----------A environment variable [consulsuffix] is required to bootstrap-----------"
+            raise
         r = dns.resolver.Resolver()
-        r.nameservers = ['146.148.116.121']
         r.timeout = 2
         r.lifetime = 2
         count = len(r.query(servicename, 'SRV'))

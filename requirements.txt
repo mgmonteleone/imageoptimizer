@@ -2,3 +2,4 @@ pillow
 mongoengine
 flask
 pyyaml
+python-consul
