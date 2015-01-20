@@ -42,7 +42,7 @@ class ImageFile(Document):
     reference = StringField(default=None)
     processtime = FloatField()
 
-
+@statsd.statsd.timed('optimizer.savetodb')
 def saveimagetomongo(Fileinfo, thefile):
     """
 

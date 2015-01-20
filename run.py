@@ -117,6 +117,8 @@ def upload(storagemethod):
         syslogger.info(json.dumps(fileinfo.__dict__))
         try:
             statsd.statsd.histogram("optimizer.bytes_processed",fileinfo.filesizeoriginal)
+            statsd.statsd.histogram("optimizer.processing_time",fileinfo.processtime)
+            statsd.statsd.event(title="Optimizer Run",text="Processed an image and saved "+str(fileinfo.percentsaved)+"%!!",alert_type="info",priority="low")
         except:
             syslogger.warn(datetime.now().__str__()+" Could not send stat to datadog.")
         return make_response(json.dumps(fileinfo.__dict__),200)

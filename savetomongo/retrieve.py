@@ -15,13 +15,14 @@ connect(configmongo["database"], host=configmongo["host"], port=configmongo["por
 __author__ = 'mgm'
 
 from save import ImageFile
-
+@statsd.statsd.timed('optimizer.retrievebyid')
 def retrievebyid(id):
     try:
         imagefile = ImageFile.objects(id=id).first()
         return imagefile
     except:
         return make_response("That file was not found",404)
+@statsd.statsd.timed('optimizer.retrievebyfilename')
 def getbyname(thefilename):
     try:
         print(datetime.datetime.now().__str__()+' Looking for '+thefilename+' in the database')
