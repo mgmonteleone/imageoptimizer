@@ -109,6 +109,7 @@ def upload(storagemethod):
                 fileinfo.reference = None
             except:
                 syslogger.error(datetime.now().__str__()+" ERROR: Could Not Save to Mongo")
+                statsd.statsd.event("Image Optimizer Error","Could not save to mongo","error",None,None,None,"normal")
                 raise
         exectime = time.time() - start_time
         syslogger.info(datetime.now().__str__()+ " Excecuted in " + str(round(exectime,4)) + " secs.")
@@ -158,6 +159,7 @@ def getbyidname(fileid,thefilename):
         return send_file(thefile.binaryfile.get(),mimetype=thefile.contentype)
 
     except:
+        statsd.statsd.event("Image Optimizer Error","Could not return file","warning",None,None,None,"normal")
         return make_response("There was a problem returning this file. Please try again",500)
 
 

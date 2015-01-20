@@ -21,6 +21,7 @@ try:
     key = kvstore.kv.get("apps/imageoptimizer/dbname")
     configmongo["database"] = key[1]["Value"]
 except ConnectionError:
+    statsd.statsd.event("Image Optimizer Error","Could not save to bootstrap couldnt get to consul","error",None,None,None,"normal")
     print "--------Could not connect to consul at" + str(srvrecordconsul.target) + " port: 8500"
     raise
 print configmongo
