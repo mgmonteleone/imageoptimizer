@@ -59,9 +59,10 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
+
 @app.route("/<storagemethod>/", methods=['POST'],strict_slashes=False)
 def upload(storagemethod):
-    if storagemethod not in ['db','file']:
+    if storagemethod not in ['db','file','store']:
         return make_response("You need to post an image file and post with the file field.",400)
         abort
     start_time = time.time()
@@ -81,8 +82,13 @@ def upload(storagemethod):
         if extension == "jpg":
             extension = "jpeg"  #bug workaround
         optimized.seek(0)
+    # Do not optimize if storage method is store....
+        if storagemethod == 'store':
+            doOptimize = False
+        else:
+            doOptimize = True
         #Save the original image to as buffer, with optimization.
-        originalimage.save(optimized, extension, optimize=True)
+        originalimage.save(optimized, extension, optimize=doOptimize)
     # Create File Info
         imagetime = time.time() - start_time
         optimized.seek(0,os.SEEK_END)
@@ -100,7 +106,7 @@ def upload(storagemethod):
             optimized.seek(0) # Very important, before writing to file, need to move buffer to beginning.
             savefile.write(optimized.read())
             savefile.close()
-        elif storagemethod == 'db':
+        elif storagemethod in ('db','store'):
             # Save to mongo
             try:
                 print filename
