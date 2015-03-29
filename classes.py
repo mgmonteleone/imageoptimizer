@@ -1,5 +1,8 @@
 __author__ = 'mgm'
 import os
+from cStringIO import StringIO
+from PIL import Image
+from time import time
 
 class Fileinfo(object):
     filename = None
@@ -26,6 +29,49 @@ class Fileinfo(object):
         self.processtime = processtime
         self.percentsaved = percentsaved
         self.dbreference = dbreference
+
+class ImageFile():
+    mimetype = str()
+    filename = str()
+    extension = str()
+    original = None
+    originalimage = StringIO()
+    height = int()
+    width = int()
+    size = int()
+    optimized = StringIO()
+    imagetime = int()
+    optimizedsize = int()
+    savedpercent = float()
+
+    def __init__(self, file):
+        """
+        Upon initialization take the passed file object, and extract data, create an optimized file.
+        :type self: object
+        """
+        start_time = time.time()
+        # Get the original file information
+        self.mimetype = file.mimetype
+        self.filename = file.filename
+        self.extension = self.filename.rsplit('.', 1)[1]
+        # Create a StringIO object for working with the original file
+        self.originalimage = Image.open(StringIO(file.read()))
+        # Now that this is an image, lets get the image info
+        self.height = self.originalimage.size[1]
+        self.width = self.originalimage.size[0]
+        self.size = len(self.original)
+        # Create a blank StringIO object for the optimized image.
+        self.optimized = StringIO()
+        if self.extension == "jpg":
+            self.extension = "jpeg"  # bug workaround
+        self.optimized.seek(0)
+        # Save the original image to the optimized buffer, applying optimization.
+        self.originalimage.save(self.optimized, self.extension, optimize=True)
+        self.imagetime = time.time() - start_time
+        # Get information about the optimized file
+        self.optimized.seek(0,os.SEEK_END)
+        self.optimizedsize = self.optimized.tell()
+        self.savedpercent = round(((1.0 - (float(float(self.optimizedsize)/float(self.size))))*100), 1)
 
 
 class SrvRecord(object):

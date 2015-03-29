@@ -4,6 +4,6 @@ apikeys:
     nano : pano
 mongo:
     savetomongo : True
-    host : localhost
-    port : 27017
-    database : new
+    host : dkr4.aut-aut.hr
+    port : 27018
+    database : imageoptimizer

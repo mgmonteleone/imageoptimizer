@@ -1,24 +1,20 @@
 __author__ = 'matthewgmonteleone'
-from flask import Flask, request, make_response, redirect, send_file, abort, Response, jsonify, url_for
+from flask import Flask, request, make_response, redirect, send_file, abort
 from werkzeug import secure_filename
 from werkzeug.exceptions import default_exceptions
 from werkzeug.exceptions import HTTPException
 
-from PIL import Image
 import werkzeug
 import json
-import os, io
-import StringIO
+import os
 import time
 import yaml
-import urllib
 import platform
-import logging, logging.handlers
+import logging,logging.handlers
 from datetime import datetime
 from savetomongo import save
-from classes import Fileinfo
+from classes import Fileinfo, ImageFile
 from savetomongo import retrieve
-from mongoengine import *
 import statsd
 import sys
 
@@ -35,7 +31,7 @@ if platform.system() == "Linux":
         handler = logging.handlers.SysLogHandler(address = '/dev/log')
         syslogger.addHandler(handler)
     except:
-        print("Can not log to syslog, eventhough I am on line, maybe in a container???")
+        print("Can not log to syslog, even though I am on line, maybe in a container???")
 
 consolelog = logging.StreamHandler(sys.stdout)
 syslogger.addHandler(consolelog)
@@ -63,55 +59,33 @@ def allowed_file(filename):
 @app.route("/<storagemethod>/", methods=['POST'],strict_slashes=False)
 def upload(storagemethod):
     if storagemethod not in ['db','file','store']:
-        return make_response("You need to post an image file and post with the file field.",400)
+        return make_response("You need to post an image file in the 'file' field.", 400)
         abort
-    start_time = time.time()
-    file = request.files.get("file")
-    if file and allowed_file(file.filename):
-        mimetype = file.mimetype
-        filename = file.filename
-        extension = filename.rsplit('.', 1)[1]
-        original = file.read()
-        originalimage = Image.open(StringIO.StringIO(original))
-    # get metadata
-        height = originalimage.size[1]
-        width = originalimage.size[0]
-        size = len(original)
-        optimized = StringIO.StringIO()
-    # Optimize and add optimized info
-        if extension == "jpg":
-            extension = "jpeg"  #bug workaround
-        optimized.seek(0)
-    # Do not optimize if storage method is store....
-        if storagemethod == 'store':
-            doOptimize = False
-        else:
-            doOptimize = True
-        #Save the original image to as buffer, with optimization.
-        originalimage.save(optimized, extension, optimize=doOptimize)
-    # Create File Info
-        imagetime = time.time() - start_time
-        optimized.seek(0,os.SEEK_END)
-        optimizedsize = optimized.tell()
-        savedpercent = round(((1.0 - (float(float(optimizedsize)/float(size))))*100),1)
+    sentfile = request.files.get("file")
+    if file and allowed_file(sentfile.filename):
+        imagefile = ImageFile(sentfile)
+        #Do not optimize if storage method is store....
         fileinfo = Fileinfo(
-            filename=filename, mimetype=mimetype, filesizeoriginal=size
-            ,width=width, height=height, filesizeoptimized=optimizedsize
-            ,reference= request.url_root+UPLOAD_FOLDER+filename
-            ,processtime=imagetime,percentsaved= savedpercent,dbreference=None )
+            filename=imagefile.filename, mimetype=imagefile.mimetype, filesizeoriginal=imagefile.size
+            ,width=imagefile.width, height=imagefile.height, filesizeoptimized=imagefile.optimizedsize
+            ,reference=request.url_root+UPLOAD_FOLDER+imagefile.filename
+            ,processtime=imagefile.imagetime,percentsaved=imagefile.savedpercent,dbreference=None)
 
         if storagemethod == 'file':
             # Save the optimized file to disk
             savefile = open(UPLOAD_FOLDER+filename,'wb')
-            optimized.seek(0) # Very important, before writing to file, need to move buffer to beginning.
-            savefile.write(optimized.read())
+            optimized.seek(0)  # Very important, before writing to file, need to move buffer to beginning.
+            savefile.write(imagefile.optimized.read())
             savefile.close()
         elif storagemethod in ('db','store'):
             # Save to mongo
             try:
                 print filename
-                optimized.seek(0)
-                returned = save.saveimagetomongo(fileinfo,optimized)
+                imagefile.optimized.seek(0)
+                if storagemethod == 'store':
+                    returned = save.saveimagetomongo(fileinfo,imagefile.originalimage)
+                else:
+                    returned = save.saveimagetomongo(fileinfo,imagefile.optimized)
                 fileinfo.dbreference = str(returned.id)
                 fileinfo.reference = None
             except:
@@ -130,7 +104,8 @@ def upload(storagemethod):
         return make_response(json.dumps(fileinfo.__dict__),200)
     else:
         return make_response("You need to post an image file and post with the file field.",400)
-    #return make_response(json.dumps(fileinfo.__dict__),200)
+
+
 @app.route("/files/<filename>", methods=['GET'])
 def retrievebyname(filename):
     syslogger.info(datetime.now().__str__()+" Entered Retrieve")
