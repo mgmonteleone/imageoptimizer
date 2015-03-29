@@ -3,7 +3,7 @@ import os
 from cStringIO import StringIO
 from PIL import Image
 from time import time
-
+import dns.resolver
 class Fileinfo(object):
     filename = None
     mimetype = "image/png"
@@ -80,9 +80,9 @@ class SrvRecord(object):
     port = None
 
     def __init__(self, service):
-        import dns.resolver
         try:
-            servicename = service + os.environ.get("consulsuffix")
+        #  servicename = service + os.environ.get("consulsuffix")
+            servicename = service + ".service.dc1.consul"
         except:
             print "----------A environment variable [consulsuffix] is required to bootstrap-----------"
             raise

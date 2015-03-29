@@ -3,3 +3,4 @@ mongoengine
 flask
 pyyaml
 python-consul
+dnspython
