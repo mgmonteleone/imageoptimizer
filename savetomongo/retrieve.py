@@ -14,7 +14,7 @@ try:
         connect(configmongo["database"], host=configmongo["host"], port=configmongo["port"])
     except:
         try:
-            connect("imageoptimizer", host="dkr4.aut-aut.rocks", port=27018)
+            connect("imageoptimizer", host="aa-gce-dkr-004", port=27018)
         except:
             raise IOError()
 except:

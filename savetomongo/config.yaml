@@ -4,6 +4,6 @@ apikeys:
     nano : pano
 mongo:
     savetomongo : True
-    host : dkr4.aut-aut.rocks
+    host : aa-gce-dkr-004
     port : 27018
     database : imageoptimizer
