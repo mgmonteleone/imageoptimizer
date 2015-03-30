@@ -28,10 +28,10 @@ try:
     print configmongo
     connect(configmongo["database"], host=configmongo["host"], port=configmongo["port"])
 except:
-    connect("imageoptimizer", host="dkr4.aut-aut.hr", port=27018)
+    connect("imageoptimizer", host="dkr4.aut-aut.rocks", port=27018)
 
 
-class ImageFile(Document):
+class StoredFile(Document):
     binaryfile = FileField()
     type = StringField()
     contentype = StringField()
@@ -45,7 +45,6 @@ class ImageFile(Document):
     reference = StringField(default=None)
     processtime = FloatField()
 
-@statsd.statsd.timed('optimizer.savetodb')
 def saveimagetomongo(Fileinfo, thefile):
     """
 
@@ -53,7 +52,7 @@ def saveimagetomongo(Fileinfo, thefile):
     :param thefile: a binary object of the actual file to be stored.
     :return: saved.id : The id of the saved file.
     """
-    imagefile = ImageFile()
+    imagefile = StoredFile()
     imagefile.binaryfile.put(thefile.read())
     imagefile.contentype = Fileinfo.mimetype
     imagefile.filename = Fileinfo.filename

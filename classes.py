@@ -3,7 +3,7 @@ import os
 from cStringIO import StringIO
 from PIL import Image
 from time import time
-import dns.resolver
+#import dns.resolver
 class Fileinfo(object):
     filename = None
     mimetype = "image/png"
@@ -49,17 +49,20 @@ class ImageFile():
         Upon initialization take the passed file object, and extract data, create an optimized file.
         :type self: object
         """
-        start_time = time.time()
+        start_time = time()
         # Get the original file information
         self.mimetype = file.mimetype
         self.filename = file.filename
         self.extension = self.filename.rsplit('.', 1)[1]
         # Create a StringIO object for working with the original file
-        self.originalimage = Image.open(StringIO(file.read()))
+        self.original = StringIO(file.read())
+        self.originalimage = Image.open(self.original)
         # Now that this is an image, lets get the image info
         self.height = self.originalimage.size[1]
         self.width = self.originalimage.size[0]
-        self.size = len(self.original)
+        self.original.seek(0)
+        self.original.seek(0,os.SEEK_END)
+        self.size = self.original.tell()
         # Create a blank StringIO object for the optimized image.
         self.optimized = StringIO()
         if self.extension == "jpg":
@@ -67,10 +70,12 @@ class ImageFile():
         self.optimized.seek(0)
         # Save the original image to the optimized buffer, applying optimization.
         self.originalimage.save(self.optimized, self.extension, optimize=True)
-        self.imagetime = time.time() - start_time
+        self.imagetime = time() - start_time
         # Get information about the optimized file
-        self.optimized.seek(0,os.SEEK_END)
+        self.optimized.seek(0, os.SEEK_END)
         self.optimizedsize = self.optimized.tell()
+        print self.optimizedsize
+        print self.size
         self.savedpercent = round(((1.0 - (float(float(self.optimizedsize)/float(self.size))))*100), 1)
 
 
@@ -87,6 +92,7 @@ class SrvRecord(object):
             print "----------A environment variable [consulsuffix] is required to bootstrap-----------"
             raise
         r = dns.resolver.Resolver()
+        r.nameservers = ["dkr4.aut-aut.rocks"]
         r.timeout = 2
         r.lifetime = 2
         srv = r.query(servicename, 'SRV')[0]
