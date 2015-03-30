@@ -3,30 +3,32 @@ import yaml
 from mongoengine import *
 from classes import Fileinfo, SrvRecord
 import datetime
-import os ,os.path
 import consul
-import json
 import statsd
 #Get Our Configuration From consul
 #First get the name of the server from srv record
-srvrecordconsul = SrvRecord("consul")
-srvrecordmongo = SrvRecord("mongos")
-configmongo = {
-    "host" : srvrecordmongo.target.to_text(),
-    "port" : srvrecordmongo.port,
-}
-#then get the name of the database from kv store.
-print(srvrecordconsul.target)
-kvstore = consul.Consul(host=srvrecordconsul.target, port=8500)
+# If we can not get the configuration from consul, then we go ahead and connect to the default.
 try:
-    key = kvstore.kv.get("apps/imageoptimizer/dbname")
-    configmongo["database"] = key[1]["Value"]
-except ConnectionError:
-    statsd.statsd.event("Image Optimizer Error","Could not save to bootstrap couldnt get to consul","error",None,None,None,"normal")
-    print "--------Could not connect to consul at" + str(srvrecordconsul.target) + " port: 8500"
-    raise
-print configmongo
-connect(configmongo["database"], host=configmongo["host"], port=configmongo["port"])
+    srvrecordconsul = SrvRecord("consul")
+    srvrecordmongo = SrvRecord("mongos")
+    configmongo = {
+        "host" : srvrecordmongo.target.to_text(),
+        "port" : srvrecordmongo.port,
+    }
+    #then get the name of the database from kv store.
+    print(srvrecordconsul.target)
+    kvstore = consul.Consul(host=srvrecordconsul.target, port=8500)
+    try:
+        key = kvstore.kv.get("apps/imageoptimizer/dbname")
+        configmongo["database"] = key[1]["Value"]
+    except ConnectionError:
+        statsd.statsd.event("Image Optimizer Error","Could not save to bootstrap couldnt get to consul","error",None,None,None,"normal")
+        print "--------Could not connect to consul at" + str(srvrecordconsul.target) + " port: 8500"
+        raise
+    print configmongo
+    connect(configmongo["database"], host=configmongo["host"], port=configmongo["port"])
+except:
+    connect("imageoptimizer", host="dkr4.aut-aut.hr", port=27018)
 
 
 class ImageFile(Document):
