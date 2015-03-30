@@ -4,7 +4,6 @@ from mongoengine import *
 from classes import Fileinfo, SrvRecord
 import datetime
 import consul
-import statsd
 #Get Our Configuration From consul
 #First get the name of the server from srv record
 # If we can not get the configuration from consul, then we go ahead and connect to the default.
@@ -22,7 +21,6 @@ try:
         key = kvstore.kv.get("apps/imageoptimizer/dbname")
         configmongo["database"] = key[1]["Value"]
     except ConnectionError:
-        statsd.statsd.event("Image Optimizer Error","Could not save to bootstrap couldnt get to consul","error",None,None,None,"normal")
         print "--------Could not connect to consul at" + str(srvrecordconsul.target) + " port: 8500"
         raise
     print configmongo
